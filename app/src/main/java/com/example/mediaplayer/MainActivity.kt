@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initView() {
-        val url = "https://dl.mix-music.ir/music/1400/01/The%20Pianist.mp3" // your URL here
+        val url ="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" // your URL here
         val mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
             )
             setDataSource(url)
             prepare() // might take long! (for buffering, etc)
-            start()
+            //start()
         }
         binding.btnPlay.setOnClickListener {
             mediaPlayer.start()
