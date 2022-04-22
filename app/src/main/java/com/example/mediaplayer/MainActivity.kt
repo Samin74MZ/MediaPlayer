@@ -28,8 +28,11 @@ class MainActivity : AppCompatActivity() {
             prepare() // might take long! (for buffering, etc)
             start()
         }
-        binding.btn_play.setOnClickListener{
-            
+        binding.btnPlay.setOnClickListener {
+            mediaPlayer.start()
+        }
+        binding.btnPause.setOnClickListener {
+            mediaPlayer.pause()
         }
     }
 
