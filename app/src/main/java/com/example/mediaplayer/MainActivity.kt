@@ -1,40 +1,111 @@
 package com.example.mediaplayer
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import androidx.appcompat.app.AppCompatActivity
+import android.media.MediaRecorder
 import android.os.Bundle
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.mediaplayer.databinding.ActivityMainBinding
+import java.io.IOException
+
+private const val LOG_TAG = "AudioRecordTest"
+private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
 class MainActivity : AppCompatActivity() {
+
     lateinit var binding: ActivityMainBinding
+    private var fileName: String = ""
+    private var permissionToRecordAccepted = false
+    private var permissions: Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
+    private var recorder: MediaRecorder? = null
+    private var player:MediaPlayer?= null
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         initView()
         setContentView(binding.root)
+
+        fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.3gp"
+        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
+
     }
 
     private fun initView() {
-        val url ="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" // your URL here
-        val mediaPlayer = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            setDataSource(url)
-            prepare() // might take long! (for buffering, etc)
-            //start()
-        }
+
         binding.btnPlay.setOnClickListener {
-            mediaPlayer.start()
+            onPlay(true)
         }
         binding.btnPause.setOnClickListener {
-            mediaPlayer.pause()
+            onPlay(false)
+        }
+        binding.btnRecord.setOnClickListener {
+            startRecording()
+
+        }
+        binding.btnStopRecording.setOnClickListener {
+            stopRecording()
         }
     }
+    private fun onPlay(start: Boolean) = if (start) {
+        startPlaying()
+    } else {
+        stopPlaying()
+    }
+    private fun startPlaying() {
+        player = MediaPlayer().apply {
+            try {
+                setDataSource(fileName)
+                prepare()
+                start()
+            } catch (e: IOException) {
+                Log.e(LOG_TAG, "prepare() failed")
+            }
+        }
+    }
+    private fun stopPlaying() {
+        player?.release()
+        player = null
+    }
+    private fun startRecording() {
+        recorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+            setOutputFile(fileName)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            try {
+                prepare()
+            } catch (e: IOException) {
+                Log.e(LOG_TAG, "prepare() failed")
+            }
+            start()
+        }
+    }
+    private fun stopRecording() {
+        recorder?.apply {
+            stop()
+            release()
+        }
+        recorder = null
+    }
 
-
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionToRecordAccepted = if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        } else {
+            false
+        }
+        if (!permissionToRecordAccepted) finish()
+    }
 }
+
